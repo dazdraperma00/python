@@ -29,9 +29,8 @@ def c_n_r(params, line, k, j):
         output(line)
 
 def grep(lines, params):
-    # обработка нашего списка
-    for i in range(len(lines)):
-        lines[i] = lines[i].rstrip()
+
+    
 
     params.pattern = re.sub('\?', '.', params.pattern)
     params.pattern = re.sub('\*{1,}', '.*', params.pattern)
@@ -43,6 +42,7 @@ def grep(lines, params):
         L = len(lines)
         last = -1
         for i in range(L):
+            lines[i] = lines[i].rstrip()
             
             if condition(lines[i], params) and i - N < 0 and i + N < L:
                 for j in range(i + N + 1):
@@ -73,6 +73,7 @@ def grep(lines, params):
         L = len(lines)
         last = -1
         for i in range(L):
+            lines[i] = lines[i].rstrip()
             
             if condition(lines[i], params) and i - B < 0 and i + A < L:
                 for j in range(i + A + 1):
@@ -103,6 +104,7 @@ def grep(lines, params):
         L = len(lines)
         last = -1
         for i in range(L):
+            lines[i] = lines[i].rstrip()
             
             if condition(lines[i], params) and i - N < 0:
                 for j in range(i + 1):
@@ -124,6 +126,7 @@ def grep(lines, params):
         L = len(lines)
         last = -1
         for i in range(L):
+            lines[i] = lines[i].rstrip()
             
             if condition(lines[i], params) and i + N < L:
                 for j in range(i, i + N + 1):
@@ -139,6 +142,7 @@ def grep(lines, params):
             output(str(k[0]))        
     else:
         for i in range(len(lines)):
+            lines[i] = lines[i].rstrip()
             if condition(lines[i], params):
                 c_n_r(params, lines[i], k, i + 1)
         
