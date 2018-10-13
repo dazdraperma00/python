@@ -3,16 +3,65 @@ from urllib.parse import urlparse
 import operator
 import re
 from datetime import datetime
+from collections import Counter
 
-def whereURL(line):
-    try:
-        k1 = line.index('"')
-        k1 = line.index(" ", k1)
-        k2 = line.index(" ", k1 + 1)
-        line = line[k1 + 1: k2]
-    except ValueError:
+def get_url(line):
+    url = re.search(' [^\[\]\s"]+ ', line)[0].strip()
+    url_parser = urlparse(url)            
+    return "{}{}".format(url_parser.netloc, url_parser.path)
+    
+
+def without_www(ignore_www, url):
+    if ignore_www:
+        if url.startswith('www.'):
+            return url[4:]
+    return url
+
+def isStart(start_at, line):
+    if start_at:
+        data = datetime.strptime(line[1:line.index(']')], '%d/%b/%Y %X')
+        if data < start_at:
+            return True
+    return False
+
+def isStop(stop_at, line):
+    if stop_at:
+        data = datetime.strptime(line[1:line.index(']')], '%d/%b/%Y %X')
+        if data > stop_at:
+            return True
+    return False
+
+def isIgnore_files(ignore_files, URL):
+    if ignore_files and URL[-1] != '/' and re.search('\..{2,4}',URL[-5:]):
+        return True
+    return False
+
+def isRequest_type(request_type, line):
+    line = re.search("[A-Z]{3,4}", line)[0]
+    
+    if request_type == line:
         return False
-    return urlparse(line)
+    return True
+
+def isIgnore_urls(ignore_urls, URL):
+    ignore_set = set(ignore_urls)
+    if URL in ignore_set:
+        return True
+    return False
+    
+def log(line):
+    if re.fullmatch('\[\d{2}/[a-zA-Z]{3}/\d{4} \d{2}\:\d{2}\:\d{2}\] "[A-Z]{3,4} [^\[\]\s"]+ .+" \d* \d*\n', line):
+        return True
+    return False
+
+
+def  top_slow(d, line, URL):
+    time = int(line[line.rfind(" ")+1:])
+    if d.get(URL):
+        d[URL][0] += 1
+        d[URL][1] += time
+    else:
+        d[URL] = [1, time]
 
 def parse(
     ignore_files=False,
@@ -23,93 +72,51 @@ def parse(
     ignore_www=False,
     slow_queries=False
 ):
-    d = {}
+    slow_dict = {}
+    counter = Counter()
     f = open('log.log')
+    
     for line in f:
         
-        if line[0] == "[":
-            
-            url_parser = whereURL(line)
-            
-            if not url_parser:
+        if log(line):
+
+            if isRequest_type(request_type, line):
                 continue
 
-            URL = "{}{}".format(url_parser.netloc, url_parser.path)
+            if isStart(start_at, line):
+                continue
 
-            if request_type:
-                k = line.index('"')
-                if request_type != line[k + 1 : k + 4]:
-                    continue
+            if isStop(stop_at, line):
+                break
 
-            if start_at:
-                data = datetime.strptime(line[1:line.index(']')], '%d/%b/%Y %X')
-                if data < start_at:
-                    continue
+            URL = get_url(line)
 
-            if stop_at:
-                data = datetime.strptime(line[1:line.index(']')], '%d/%b/%Y %X')
-                if data > stop_at:
-                    break
+            if isIgnore_files(ignore_files, URL):
+                continue
 
-            
-            if ignore_files:
-                if URL[-1] == '/' and re.search('\..{3,4}',URL[-5:]):
-                    continue
-
-            if ignore_urls:
-                Flag = False
-                for i_url in ignore_urls:
-                    if URL == i_url:
-                        Flag = True
-                if Flag:
-                    continue
-            
-            if ignore_www:
-                if URL.startswith('www'):
-                    URL = URL[4:]
-
+            if isIgnore_urls(ignore_urls, URL):
+                continue
+                
+            URL = without_www(ignore_www, URL)
 
             if slow_queries:
-                time = int(line[line.rfind(" ")+1:])
-                if d.get(URL):
-                    d[URL][0] += 1
-                    d[URL][1] += time
-                else:
-                    d[URL] = [1, time]
+                top_slow(slow_dict, line, URL)
             else:
-                if d.get(URL):
-                    d[URL] += 1
-                else:
-                    d[URL] = 1
+                counter[URL] += 1
 
     if slow_queries:
-        if len(d) == 0:
-            return []
-        new_list = []
-        for value in d.values():
-            new_list.append(value[1]//value[0])
-            
-        new_list = sorted(new_list, reverse = True)
-        
-        return [new_list[i] for i in range(5)]
-
+        new_list = [value[1]//value[0] for value in slow_dict.values()]
+        sorted_list = sorted(new_list, reverse = True)
+        if len(sorted_list) >= 5:
+            return [sorted_list[i] for i in range(5)]
+        else:
+            return [sorted_list[i] for i in range(len(sorted_list))]
     else:
-        if len(d) == 0:
-            return []
-        sorted_d = sorted(d.items(), reverse = True, key = operator.itemgetter(1))
-    
-        return [sorted_d[i][1] for i in range(5)]
-                 
-"""
-    sorted_d = sorted(d.values(), reverse = True)
-    
-    for i in range(5):
-        new_list.append(sorted_d[i])
-    return new_list
-"""
+        return [item[1] for item in counter.most_common(5)]
 
+        
 def main():
-    print(parse())
+    print(parse(slow_queries=False, request_type = 'GET'))
 
 if __name__ == '__main__':
     main()
