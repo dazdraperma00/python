@@ -1,6 +1,5 @@
 # -*- encoding: utf-8 -*-
 from urllib.parse import urlparse 
-import operator
 import re
 from datetime import datetime
 from collections import Counter
