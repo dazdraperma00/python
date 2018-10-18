@@ -36,11 +36,13 @@ def isIgnore_files(ignore_files, URL):
     return False
 
 def isRequest_type(request_type, line):
-    line = re.search("[A-Z]{3,4}", line)[0]
+    if request_type:
+        line = re.search("[A-Z]{3,4}", line)[0]
     
-    if request_type == line:
-        return False
-    return True
+        if request_type == line:
+            return False
+        return True
+    return False
 
 def isIgnore_urls(ignore_urls, URL):
     ignore_set = set(ignore_urls)
