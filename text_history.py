@@ -64,7 +64,7 @@ class TextHistory:
                 first = idx
             if item.to_version == to_version:
                 last = idx 
-        if (first != -1 or last != -1) and from_version == to_version:
+        if not(first == -1 and last == -1) and from_version == to_version:
             return []
         if first == -1 or last == -1:
             raise ValueError
