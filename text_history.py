@@ -42,8 +42,8 @@ class TextHistory:
         a = DeleteAction(pos, length, self._version, self._version + 1)
         return self.action(a)
 
-    def get_actions(self, from_version = 0, to_version = None):
-        
+    def get_actions(self, from_version=0, to_version=None):
+
         if to_version is None:
             to_version = self.version
 
@@ -57,7 +57,7 @@ class TextHistory:
                 first = idx
             if item.to_version == to_version:
                 last = idx 
-        if (first != -1 or last != -1) and from_version == to_version:
+        if (first != -1 or last != -1) and from_version == to_version or self.version == 0:
             return []
         if first == -1 or last == -1:
             raise ValueError
