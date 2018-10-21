@@ -69,63 +69,61 @@ class TextHistory:
 
         opt_actions = []  # Список для actions c учетом оптимизации
 
-        global i
-
         i = first
 
         # Идем по всем элементам actions
         while i <= last:
 
-            opt_actions.append(self._processing(i, last))
-    
-            i += 1
-        return opt_actions
-
-    def _processing(self, idx, border):
-
-        # Проверка на выход за пределы диапозона
-        if idx == border:
-            return self._actions[idx]
-
-        j = idx + 1
-
-        while isinstance(self._actions[j], type(self._actions[idx])):
-            # В случае DeleteAction
-            if isinstance(self._actions[idx], DeleteAction) and self._actions[j].pos == self._actions[j - 1].pos:
-                j += 1
-                if j == border + 1:
-                    break
-            # В случае InsertAction/ReplaceAction
-            elif self._actions[j].pos == self._actions[j - 1].pos + len(self._actions[j - 1].text):
-                j += 1
-                if j == border + 1:
-                    break
-            else:
+            # Проверка на выход за пределы диапозона
+            if i == last:
+                opt_actions.append(self._actions[i])
                 break
 
-        # Проверка на вход в цикл
-        # Не зашли в цикл:
-        if j == idx + 1:
-            return self._actions[idx]
+            j = i + 1
 
-        # Зашли в цикл:
-        global i
-        i = j - 1
+            # Пытаемся просмотреть последующие элементы на предмет оптимизации
+            while isinstance(self._actions[j], type(self._actions[i])):
+                # В случае DeleteAction
+                if isinstance(self._actions[i], DeleteAction) and self._actions[j].pos == self._actions[j - 1].pos:
+                    j += 1
+                    if j == last + 1:
+                        break
+                # В случае InsertAction/ReplaceAction
+                elif self._actions[j].pos == self._actions[j - 1].pos + len(self._actions[j - 1].text):
+                    j += 1
+                    if j == last + 1:
+                        break
+                else:
+                    break
 
-        if isinstance(self._actions[idx], DeleteAction):
-            length = 0
-            for k in range(idx, j):
-                length += self._actions[k].length
+            # Проверка на изменение j ( в случае изменения мы находим возможность оптимизации )
+            # Не изменилась:
+            if j == i + 1:
+                opt_actions.append(self._actions[i])
+                i += 1
+                continue
 
-            return DeleteAction(self._actions[idx].pos, length, self._actions[idx].from_version,
-                                self._actions[j - 1].to_version)
-        else:
-            text = ""
-            for k in range(idx, j):
-                text = ''.join((text, self._actions[k].text))
+            # Изменилась:
+            elif isinstance(self._actions[i], DeleteAction):
+                length = 0
+                for k in range(i, j):
+                    length += self._actions[k].length
 
-            return type(self._actions[idx])(self._actions[idx].pos, text, self._actions[idx].from_version,
-                                            self._actions[j - 1].to_version)
+                opt_actions.append(DeleteAction(self._actions[i].pos, length, self._actions[i].from_version,
+                                                self._actions[j - 1].to_version))
+            else:
+                text = ""
+                for k in range(i, j):
+                    text = ''.join((text, self._actions[k].text))
+
+                opt_actions.append(type(self._actions[i])(self._actions[i].pos, text, self._actions[i].from_version,
+                                                          self._actions[j - 1].to_version))
+
+            # Меняем индекс, чтобы повторно не пройти те же элементы
+            i = j - 1
+
+            i += 1
+        return opt_actions
 
 
 class Action:
@@ -186,6 +184,7 @@ def main():
     h.insert('Oh, hi, Mark!')
     print(h.text)
     h.replace('123456', 3)
+    h.insert('abc', 9)
     h.replace('789', 9)
     h.replace('10', 12)
     print(h.text)
