@@ -3,8 +3,8 @@ import argparse
 import pickle
 import socket
 import time
-from threading import Thread
-from heapq import heappush, heappop
+from uuid import uuid1
+from heapq import heappush
 
 
 class TaskQueueServer:
@@ -15,19 +15,7 @@ class TaskQueueServer:
         self.timeout = timeout
         self.path = ''.join((path, 'tasks.txt'))
 
-        tasks = {}
-        if os.path.getsize(self.path) > 0:
-            with open(self.path, 'rb') as f:
-                unpickler = pickle.Unpickler(f)
-                tasks = unpickler.load()
-
-        self.tasks = tasks  # dict всех заданий
-        self.in_process = {}  # dict для заданий, взятых на выполнение
-
-        start = 0
-        if self.tasks:
-            start = self.tasks['time']  # Будем сохранять в tasks приоритет последнего добавленного элемента
-        self.start = start
+        self.storage = TasksStorage(self.path)
 
     def run(self):
         server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -79,45 +67,31 @@ class TaskQueueServer:
             TaskQueueServer.error(client)
             return
 
-        if not self.tasks.get(queue_name):
-            self.tasks[queue_name] = []
-
-        # Помимо того, что id - уникален, он будет служить приоритетом в очереди
-        # Переменная start введена, чтобы в случае загрузки из файла всех заданий
-        # приоритет новых заданий был больше, чем у старых
-        task_id = time.perf_counter() + self.start
-        # Запишем время
-        self.tasks['time'] = task_id
+        task_id = uuid1().hex
         new_task = Task(length, task)
 
-        heappush(self.tasks[queue_name], (str(task_id), new_task))
+        self.storage.add(queue_name, task_id, new_task)
 
-        client.send(str(task_id).encode())
+        client.send(task_id.encode())
         client.close()
 
     def _get(self, client, command):
         queue_name = command[1]
 
-        try:
-            current_item = heappop(self.tasks[queue_name])
-        except LookupError:
+        full_task = self.storage.get(queue_name)
+
+        if full_task is None:
             client.send(b'NONE')
             client.close()
             return
 
-        task_id = current_item[0]
-        current_task = current_item[1]
-
-        if not self.in_process.get(queue_name):
-            self.in_process[queue_name] = {}  # Создаем словарь task_id: timer
+        task_id = full_task[0]
+        current_task = full_task[1]
 
         # Формируем ответ
         answer = b' '.join((task_id.encode(), str(current_task.length).encode(), current_task.data))
 
-        timer = Timer(self.timeout, current_task, task_id, self.in_process[queue_name], self.tasks[queue_name])
-        self.in_process[queue_name][task_id] = timer
-
-        timer.start()
+        current_task.timeout = time.perf_counter() + self.timeout
         # Отвечаем клиенту и закрываем соединение
         client.send(answer)
         client.close()
@@ -126,92 +100,107 @@ class TaskQueueServer:
         queue_name = command[1]
         task_id = command[2]
 
-        if not (self.in_process.get(queue_name) and self.in_process[queue_name].get(task_id)):
-            client.send(b'NO')
-            client.close()
-            return
+        answer = self.storage.ack(queue_name, task_id)
 
-        timer = self.in_process[queue_name].pop(task_id)
-        timer.kill()
-
-        client.send(b'YES')
+        client.send(answer)
         client.close()
+        return
 
     def _in(self, client, command):
         queue_name = command[1]
         task_id = command[2]
 
-        if self.tasks.get(queue_name) and TaskQueueServer.find(self.tasks[queue_name], task_id):
-            client.send(b'YES')
-            client.close()
-            return
+        answer = self.storage.check(queue_name, task_id)
 
-        if self.in_process.get(queue_name) and self.in_process[queue_name].get(task_id):
-            client.send(b'YES')
-            client.close()
-            return
-
-        client.send(b'NO')
+        client.send(answer)
         client.close()
 
     def _save(self, client):
-        try:
-            with open(self.path, 'wb') as f:
-                pickle.dump(self.tasks, f)
-                client.send(b'OK')
-                client.close()
-        except FileNotFoundError:
-            TaskQueueServer.error(client)
+        answer = self.storage.save()
+        client.send(answer)
+        client.close()
 
     @staticmethod
     def error(client):
         client.send(b'ERROR')
         client.close()
 
-    def save_all(self):
+
+def find(heap, task_id):
+    for item in heap:
+        if item[0] == task_id:
+            return True
+    return False
+
+
+class TasksStorage:
+    def __init__(self, path):
+        self.path = path
+
+        tasks = {}
+        if os.path.getsize(self.path) > 0:
+            with open(self.path, 'rb') as f:
+                unpickler = pickle.Unpickler(f)
+                tasks = unpickler.load()
+
+        self.tasks = tasks  # dict всех заданий
+
+    def add(self, queue_name, task_id, task):
+        if not self.tasks.get(queue_name):
+            self.tasks[queue_name] = []
+
+        heappush(self.tasks[queue_name], (task_id, task))
+
+    def get(self, queue_name):
+        current_time = time.perf_counter()
+        try:
+            current_task = None
+            for item in self.tasks[queue_name]:
+                if item[1].timeout is None or current_time > item[1].timeout:
+                    current_task = item[1]
+                    task_id = item[0]
+                    break
+            if current_task is None:
+                raise KeyError
+        except KeyError:
+            return None
+
+        return task_id, current_task
+
+    def ack(self, queue_name, task_id):
+        ack_time = time.perf_counter()
+
+        try:
+
+            for idx, item in enumerate(self.tasks[queue_name]):
+                if item[0] == task_id and ack_time <= item[1].timeout:
+                    del self.tasks[queue_name][idx]
+                    return b'YES'
+
+        except KeyError:
+            return b'NO'
+
+        return b'NO'
+
+    def check(self, queue_name, task_id):
+        if self.tasks.get(queue_name) and find(self.tasks[queue_name], task_id):
+            return b'YES'
+        return b'NO'
+
+    def save(self):
         try:
             with open(self.path, 'wb') as f:
                 pickle.dump(self.tasks, f)
-        except OSError:
-            return
-
-    @staticmethod
-    def find(heap, task_id):
-        for item in heap:
-            if item[0] == task_id:
-                return True
-        return False
-
-
-class Timer(Thread):
-    def __init__(self, timeout, task, task_id, in_process, tasks):
-        Thread.__init__(self)
-        self.timeout = timeout
-        self.task = task
-        self.task_id = task_id
-        self.in_process = in_process
-        self.tasks = tasks
-        self.stop = False
-
-    def run(self):
-        while self.timeout:
-            time.sleep(1)
-            if self.stop:
-                return
-            self.timeout -= 1
-
-        self.in_process.pop(self.task_id)
-
-        heappush(self.tasks, (self.task_id, self.task))
-
-    def kill(self):
-        self.stop = True
+                return b'OK'
+        except FileNotFoundError:
+            return b'ERROR'
 
 
 class Task:
-    def __init__(self, length, data):
+    def __init__(self, length, data, timeout=None):
         self.length = length
         self.data = data
+        self.timeout = timeout
 
     def __repr__(self):
         return 'Task(len = {!r}, data = {!r}'.format(self.length, self.data)
