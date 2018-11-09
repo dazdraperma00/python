@@ -53,27 +53,43 @@ class TaskQueueServer:
                 self._save(current_connection)
 
             else:
-                TaskQueueServer.error(current_connection)
+                TaskQueueServer.send_and_close(b'ERROR', current_connection)
+
+    @staticmethod
+    def is_task_correct(length, data):
+        if length > 10**6 or len(data) != length:
+            return False
+        return True
+
+    @staticmethod
+    def create_id():
+        return uuid1().hex
+
+    @staticmethod
+    def send_and_close(answer, client):
+        client.send(answer)
+        client.close()
 
     def _add(self, client, command):
         queue_name = command[1]
 
         try:
             length = int(command[2])
-            task = bytearray(command[3].encode())
-            if len(task) != length:
-                raise ValueError
+            data = bytearray(command[3].encode())
         except ValueError:
-            TaskQueueServer.error(client)
+            TaskQueueServer.send_and_close(b'ERROR', client)
             return
 
-        task_id = uuid1().hex
-        new_task = Task(length, task)
+        if not TaskQueueServer.is_task_correct(length, data):
+            TaskQueueServer.send_and_close(b'ERROR', client)
+            return
+
+        task_id = TaskQueueServer.create_id()
+        new_task = Task(length, data)
 
         self.storage.add(queue_name, task_id, new_task)
 
-        client.send(task_id.encode())
-        client.close()
+        TaskQueueServer.send_and_close(task_id.encode(), client)
 
     def _get(self, client, command):
         queue_name = command[1]
@@ -81,8 +97,7 @@ class TaskQueueServer:
         full_task = self.storage.get(queue_name)
 
         if full_task is None:
-            client.send(b'NONE')
-            client.close()
+            TaskQueueServer.send_and_close(b'NONE', client)
             return
 
         task_id = full_task[0]
@@ -93,8 +108,7 @@ class TaskQueueServer:
 
         current_task.timeout = time.perf_counter() + self.timeout
         # Отвечаем клиенту и закрываем соединение
-        client.send(answer)
-        client.close()
+        TaskQueueServer.send_and_close(answer, client)
 
     def _ack(self, client, command):
         queue_name = command[1]
@@ -102,9 +116,7 @@ class TaskQueueServer:
 
         answer = self.storage.ack(queue_name, task_id)
 
-        client.send(answer)
-        client.close()
-        return
+        TaskQueueServer.send_and_close(answer, client)
 
     def _in(self, client, command):
         queue_name = command[1]
@@ -112,18 +124,11 @@ class TaskQueueServer:
 
         answer = self.storage.check(queue_name, task_id)
 
-        client.send(answer)
-        client.close()
+        TaskQueueServer.send_and_close(answer, client)
 
     def _save(self, client):
         answer = self.storage.save()
-        client.send(answer)
-        client.close()
-
-    @staticmethod
-    def error(client):
-        client.send(b'ERROR')
-        client.close()
+        TaskQueueServer.send_and_close(answer, client)
 
 
 def find(heap, task_id):
@@ -156,24 +161,24 @@ class TasksStorage:
         try:
             current_task = None
             for item in self.tasks[queue_name]:
-                if item[1].timeout is None or current_time > item[1].timeout:
+                if item[1].timeout is None or not item[1].is_active(current_time):
                     current_task = item[1]
                     task_id = item[0]
                     break
-            if current_task is None:
-                raise KeyError
         except KeyError:
+            return None
+
+        if current_task is None:
             return None
 
         return task_id, current_task
 
     def ack(self, queue_name, task_id):
         ack_time = time.perf_counter()
-
         try:
 
             for idx, item in enumerate(self.tasks[queue_name]):
-                if item[0] == task_id and ack_time <= item[1].timeout:
+                if item[0] == task_id and item[1].is_active(ack_time):
                     del self.tasks[queue_name][idx]
                     return b'YES'
 
@@ -201,6 +206,11 @@ class Task:
         self.length = length
         self.data = data
         self.timeout = timeout
+
+    def is_active(self, current_time):
+        if self.timeout >= current_time:
+            return True
+        return False
 
     def __repr__(self):
         return 'Task(len = {!r}, data = {!r}'.format(self.length, self.data)
