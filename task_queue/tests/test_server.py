@@ -65,7 +65,7 @@ class ServerBaseTest(TestCase):
         task_id_1 = self.send(b'ADD 1 5 first')
         task_id_2 = self.send(b'ADD 1 6 second')
         task_id_3 = self.send(b'ADD 1 5 third')
-        self.send(b'SAVE')
+        self.assertEqual(b'OK', self.send(b'SAVE'))
         self.tearDown()
 
         self.setUp()
@@ -82,7 +82,7 @@ class ServerBaseTest(TestCase):
         self.assertEqual(b'YES', self.send(b'ACK 1 ' + task_id_3))
         self.assertEqual(b'YES', self.send(b'ACK 1 ' + task_id_4))
 
-        self.send(b'SAVE')
+        self.assertEqual(b'OK', self.send(b'SAVE'))
 
     def test_priority_ack_no(self):
         task_id_1 = self.send(b'ADD 1 5 first')
@@ -113,6 +113,21 @@ class ServerBaseTest(TestCase):
 
         self.assertEqual(task_id_1 + b' 5 first', self.send(b'GET 1'))
         self.assertEqual(task_id_3 + b' 5 third', self.send(b'GET 1'))
+
+    def test_get_tearDown_ack(self):
+        task_id_1 = self.send(b'ADD 1 5 first')
+        self.assertEqual(task_id_1 + b' 5 first', self.send(b'GET 1'))
+        self.assertEqual(b'OK', self.send(b'SAVE'))
+        self.tearDown()
+
+        self.setUp()
+        self.assertEqual(b'YES', self.send(b'ACK 1 ' + task_id_1))
+        self.assertEqual(b'NONE', self.send(b'GET 1'))
+        self.assertEqual(b'OK', self.send(b'SAVE'))
+
+    def test_invalid_data(self):
+        self.assertEqual(b'ERROR', self.send(b'ADD 1 5 123456'))
+        self.assertEqual(b'ERROR', self.send(b'ADD 1 dsa3ads 123456'))
 
 
 if __name__ == '__main__':

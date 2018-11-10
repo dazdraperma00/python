@@ -13,9 +13,10 @@ class TaskQueueServer:
         self.ip = ip
         self.port = port
         self.timeout = timeout
-        self.path = ''.join((path, 'tasks.txt'))
 
-        self.storage = TasksStorage(self.path)
+        path = ''.join((path, 'tasks.txt'))
+
+        self.storage = TasksStorage(path)
 
     def run(self):
         server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -62,32 +63,25 @@ class TaskQueueServer:
         return True
 
     @staticmethod
-    def create_id():
-        return uuid1().hex
-
-    @staticmethod
     def send_and_close(answer, client):
         client.send(answer)
         client.close()
 
     def _add(self, client, command):
         queue_name = command[1]
+        length = command[2]
+        data = command[3].encode()
 
         try:
-            length = int(command[2])
-            data = bytearray(command[3].encode())
-        except ValueError:
+            new_task = Task(length, data)
+        except (ValueError, InvalidTaskError):
             TaskQueueServer.send_and_close(b'ERROR', client)
             return
 
-        if not TaskQueueServer.is_task_correct(length, data):
-            TaskQueueServer.send_and_close(b'ERROR', client)
-            return
+        task_id = Task.create_id()
+        full_task = (task_id, new_task)
 
-        task_id = TaskQueueServer.create_id()
-        new_task = Task(length, data)
-
-        self.storage.add(queue_name, task_id, new_task)
+        self.storage.add(queue_name, full_task)
 
         TaskQueueServer.send_and_close(task_id.encode(), client)
 
@@ -106,7 +100,7 @@ class TaskQueueServer:
         # Формируем ответ
         answer = b' '.join((task_id.encode(), str(current_task.length).encode(), current_task.data))
 
-        current_task.timeout = time.perf_counter() + self.timeout
+        current_task.timeout = time.time() + self.timeout
         # Отвечаем клиенту и закрываем соединение
         TaskQueueServer.send_and_close(answer, client)
 
@@ -143,25 +137,27 @@ class TasksStorage:
         self.path = path
 
         tasks = {}
-        if os.path.getsize(self.path) > 0:
-            with open(self.path, 'rb') as f:
-                unpickler = pickle.Unpickler(f)
-                tasks = unpickler.load()
-
+        try:
+            if os.path.getsize(self.path) > 0:
+                with open(self.path, 'rb') as f:
+                    unpickler = pickle.Unpickler(f)
+                    tasks = unpickler.load()
+        except FileNotFoundError:
+            pass
         self.tasks = tasks  # dict всех заданий
 
-    def add(self, queue_name, task_id, task):
+    def add(self, queue_name, task):
         if not self.tasks.get(queue_name):
             self.tasks[queue_name] = []
 
-        heappush(self.tasks[queue_name], (task_id, task))
+        heappush(self.tasks[queue_name], task)
 
     def get(self, queue_name):
-        current_time = time.perf_counter()
+        current_time = time.time()
         try:
             current_task = None
             for item in self.tasks[queue_name]:
-                if item[1].timeout is None or not item[1].is_active(current_time):
+                if not item[1].is_active(current_time):
                     current_task = item[1]
                     task_id = item[0]
                     break
@@ -174,7 +170,7 @@ class TasksStorage:
         return task_id, current_task
 
     def ack(self, queue_name, task_id):
-        ack_time = time.perf_counter()
+        ack_time = time.time()
         try:
 
             for idx, item in enumerate(self.tasks[queue_name]):
@@ -203,17 +199,32 @@ class TasksStorage:
 
 class Task:
     def __init__(self, length, data, timeout=None):
+        length = int(length)
+        data = bytearray(data)
+        if length > 10 ** 6 or len(data) != length:
+            raise InvalidTaskError
+
         self.length = length
         self.data = data
         self.timeout = timeout
 
+    @staticmethod
+    def create_id():
+        return uuid1().hex
+
     def is_active(self, current_time):
+        if self.timeout is None:
+            return False
         if self.timeout >= current_time:
             return True
         return False
 
     def __repr__(self):
         return 'Task(len = {!r}, data = {!r}'.format(self.length, self.data)
+
+
+class InvalidTaskError(Exception):
+    pass
 
 
 def parse_args():
