@@ -57,12 +57,6 @@ class TaskQueueServer:
                 TaskQueueServer.send_and_close(b'ERROR', current_connection)
 
     @staticmethod
-    def is_task_correct(length, data):
-        if length > 10**6 or len(data) != length:
-            return False
-        return True
-
-    @staticmethod
     def send_and_close(answer, client):
         client.send(answer)
         client.close()
@@ -78,12 +72,9 @@ class TaskQueueServer:
             TaskQueueServer.send_and_close(b'ERROR', client)
             return
 
-        task_id = Task.create_id()
-        full_task = (task_id, new_task)
+        self.storage.add(queue_name, new_task)
 
-        self.storage.add(queue_name, full_task)
-
-        TaskQueueServer.send_and_close(task_id.encode(), client)
+        TaskQueueServer.send_and_close(new_task.task_id.encode(), client)
 
     def _get(self, client, command):
         queue_name = command[1]
@@ -100,7 +91,9 @@ class TaskQueueServer:
         # Формируем ответ
         answer = b' '.join((task_id.encode(), str(current_task.length).encode(), current_task.data))
 
-        current_task.timeout = time.time() + self.timeout
+        timeout = time.time() + self.timeout
+        current_task.set_timeout(timeout)  # Устанавливаем время для выполнения
+
         # Отвечаем клиенту и закрываем соединение
         TaskQueueServer.send_and_close(answer, client)
 
@@ -150,7 +143,8 @@ class TasksStorage:
         if not self.tasks.get(queue_name):
             self.tasks[queue_name] = []
 
-        heappush(self.tasks[queue_name], task)
+        full_task = (task.task_id, task)
+        heappush(self.tasks[queue_name], full_task)
 
     def get(self, queue_name):
         current_time = time.time()
@@ -204,13 +198,14 @@ class Task:
         if length > 10 ** 6 or len(data) != length:
             raise InvalidTaskError
 
+        task_id = uuid1().hex
+        self.task_id = task_id
         self.length = length
         self.data = data
         self.timeout = timeout
 
-    @staticmethod
-    def create_id():
-        return uuid1().hex
+    def set_timeout(self, timeout):
+        self.timeout = timeout
 
     def is_active(self, current_time):
         if self.timeout is None:
@@ -220,7 +215,7 @@ class Task:
         return False
 
     def __repr__(self):
-        return 'Task(len = {!r}, data = {!r}'.format(self.length, self.data)
+        return 'Task(id = {!r}, len = {!r}, data = {!r})'.format(self.task_id, self.length, self.data)
 
 
 class InvalidTaskError(Exception):
