@@ -1,0 +1,8 @@
+port: 8080
+directory: 'tmp/a/'
+nodes:
+    - host: 'localhost'
+      port: 8081
+    - host: 'localhost'
+      port: 8082
+save: True
