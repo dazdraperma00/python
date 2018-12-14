@@ -13,17 +13,33 @@ from hitcount.views import HitCountDetailView
 def index(request):
     name = request.GET.get('text', '')
 
-    posts = Post.objects.filter(status='v', subject__contains=name)
+    context = {'post_add_url': '/add_post'}
+
+    posts_list = Post.objects.filter(status='v', subject__contains=name)
+    html = 'index.html'
 
     if request.path == '/popular/':
-        posts = Post.objects.filter(status='v', subject__contains=name).order_by("-hit_count_generic__hits")
-        return render(request, 'popular_index.html', {"posts": posts})
+        posts_list = Post.objects.filter(status='v', subject__contains=name).order_by("-hit_count_generic__hits")
+        html = 'popular_index.html'
 
     elif request.path == '/last_added/':
-        posts = Post.objects.filter(status='v', subject__contains=name).order_by('-id')
-        return render(request, 'last_added_index.html', {"posts": posts})
+        posts_list = Post.objects.filter(status='v', subject__contains=name).order_by('-id')
+        html = 'last_added_index.html'
 
-    return render(request, 'index.html', {"posts": posts})
+    paginator = Paginator(posts_list, 5)
+
+    page = request.GET.get('page')
+
+    try:
+        posts = paginator.page(page)
+    except PageNotAnInteger:
+        posts = paginator.page(1)
+    except EmptyPage:
+        posts = paginator.page(paginator.num_pages)
+
+    context['posts'] = posts
+
+    return render(request, html, context)
 
 
 class PostsView(HitCountDetailView):
