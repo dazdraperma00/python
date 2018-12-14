@@ -1,0 +1,28 @@
+{% load static %}
+
+<head>
+     <title>{% block title %}My amazing site{% endblock %}</title>
+
+     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+     <link href="https://fonts.googleapis.com/css?family=Lobster&subset=latin,cyrillic"
+           rel="stylesheet" type="text/css">
+
+     <link rel="stylesheet" href="{% static 'css/post.css' %}">
+</head>
+<body>
+<div class="content container">
+    <div class="row">
+        <div class="col-md-8">
+             <div class="container theme-showcase" role="main">
+                  {% block content %}
+                  {% endblock %}
+             </div>
+        </div>
+    </div>
+</div>
+</body>
+
+
+
+

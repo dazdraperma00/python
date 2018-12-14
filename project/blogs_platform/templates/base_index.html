@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %} Posts {% endblock %}
+
+{% block content %}
+
+<h2 class="page-header"> Список постов </h2>
+
+<table>
+    <tr>
+        <td valign="top">
+            <form action="" target="_blank">
+              <input type="hidden" name="searchid" value="808327">
+              <input type="search" name="text" required placeholder="Поиск по постам" style="padding: 5px 2px 5px 25px;
+              background: url('http://3.bp.blogspot.com/-4w14hQHr5yQ/Tgm6u7KwUkI/AAAAAAAACAI/Hu2poBOPx3g/s25/search.png') no-repeat scroll 0 50%;
+              ">
+            </form>
+        </td>
+        <td valign="top">
+            <select name="select" onchange="location=value">
+                {% block sidebar %}
+                <option value="/" selected="selected">Сортировать (все)</option>
+                <option value="/popular">Популярные</option>
+                <option value="/last_added">Последние добавленные</option>
+                {% endblock %}
+            </select>
+        </td>
+    </tr>
+</table>
+
+<ul>
+    {% for post in posts %}
+        <li><a href="/post/{{ post.pk }}"> {{ post.subject }} </a></li>
+    {% endfor %}
+</ul>
+
+<a href="{{ post_add_url }}" type="button" class="btn btn-primary">
+    Добавить пост
+</a>
+
+{% endblock %}

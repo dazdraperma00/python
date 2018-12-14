@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ post.subject }}{% endblock %}
+
+{% block content %}
+
+<h2 class="page-header"> {{ post.subject }} </h2>
+
+<div class="well">
+    {{ post.text }}
+</div>
+
+{% for comment in comments %}
+<p>
+    <b>{{comment.author_nick}}:</b> {{comment.text}}
+    {% if comment.reply_to %}
+        <b>|  Reply to {{comment.reply_to.author_nick}} </b>
+    {% endif %}
+</p>
+{% endfor %}
+
+<a href="{{ comment_add_url }}" type="button" class="btn btn-primary">
+    Добавить комментарий
+</a>
+
+
+<br>
+<div class="pagination">
+    <span class="step-links">
+        {% if comments.has_previous %}
+            <a href="?page={{ comments.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ comments.number }} of {{ comments.paginator.num_pages }}.
+        </span>
+
+        {% if comments.has_next %}
+            <a href="?page={{ comments.next_page_number }}">next</a>
+        {% endif %}
+    </span>
+</div>
+
+
+{% endblock %}
