@@ -1,0 +1,17 @@
+{% load static %}
+
+<head>
+    <link rel="stylesheet" href="{% static 'css/list.css' %}">
+</head>
+
+<body bgcolor="grey">
+<div class="two"><h1> <a href="/"> Book-books </a> </h1></div>
+<div class="main">
+<ul class="category-list">
+        <li><a href="/clients"> Клиенты </a> <span>{{ clients }}</span> </li>
+        <li><a href="/products"> Товары </a> <span>{{ products }}</span> </li>
+        <li><a href="/suppliers"> Поставщики </a> <span>{{ suppliers }}</span> </li>
+        <li><a href="/sales"> Журнал продаж </a> <span>{{ sales }}</span> </li>
+</ul>
+</div>
+</body>

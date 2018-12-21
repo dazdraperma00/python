@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %} {{ client }} {% endblock %}
+
+{% block content %}
+
+<div class="block2">
+    <p>
+        Имя: {{ client.first_name }}
+    </p>
+
+    <p>
+    Фамилия: {{ client.last_name}}
+    </p>
+
+    <p>
+    Телефон: {{ client.phone }}
+    </p>
+</div>
+
+<div  class="block">
+    <a href="{{ edit_client }}" class="button15">
+        Редактировать
+    </a>
+</div>
+
+{% endblock %}

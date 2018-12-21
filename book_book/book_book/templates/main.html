@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block title %} Главная страница {% endblock %}
+
+{% block content %}
+
+<ul class="category-list">
+        <li><a href="/clients"> Клиенты </a> <span>{{ clients }}</span> </li>
+        <li><a href="/products"> Товары </a> <span>{{ products }}</span> </li>
+        <li><a href="/suppliers"> Поставщики </a> <span>{{ suppliers }}</span> </li>
+        <li><a href="/sales"> Журнал продаж </a> <span>{{ sales }}</span> </li>
+</ul>
+
+{% endblock %}

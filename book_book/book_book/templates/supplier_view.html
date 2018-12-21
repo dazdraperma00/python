@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %} {{ supplier }} {% endblock %}
+
+{% block content %}
+
+<div class="block2">
+    <p>
+        Имя поставщика: {{ supplier.name }}
+    </p>
+
+    <p>
+        Телефон: {{ supplier.phone}}
+    </p>
+
+    <p>
+        Адрес: {{ supplier.address }}
+    </p>
+</div>
+
+<div  class="block">
+    <a href="{{ edit_supplier }}" class="button15">
+        Редактировать
+    </a>
+</div>
+
+{% endblock %}

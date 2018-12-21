@@ -1,0 +1,18 @@
+{% load static %}
+
+<head>
+    <link rel="stylesheet" href="{% static 'css/list.css' %}">
+    <title> {% block title %} My amazing site {% endblock %}</title>
+</head>
+
+<body bgcolor="grey">
+<div class="two" style="border-radius: 20px"><h1> <a href="/"> Book-books </a> </h1></div>
+<div class="parent">
+    <div class="child"  align="center" style="width: 25%;"> {% block left %} {% endblock %} </div>
+    <div class="child" style="border-radius: 0 0 20px 20px; width: 49%; border: 1px solid black; background: white;" >
+        {% block content %}
+        {% endblock %}
+    </div>
+    <div class="child" align="center" style="width: 25%;"> {% block right %} {% endblock %} </div>
+</div>
+</body>

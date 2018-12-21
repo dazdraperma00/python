@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %} Поставщики {% endblock %}
+
+{% block content %}
+
+<ul class="category-list">
+    {% for supplier in suppliers %}
+        <li><a href="/suppliers/{{ supplier.pk }}"> {{ supplier }} </a></li>
+    {% endfor %}
+</ul>
+
+<div align="center" class="block">
+    <a href="{{ supplier_add_url }}" class="button15">
+        Добавить поставщика
+    </a>
+</div>
+
+{% endblock %}
+
+{% block left %}
+            <form action="" target="_blank">
+              <input type="hidden" name="searchid" value="808327">
+              <input type="search" name="text" required placeholder="Поиск по поставщикам" style="padding: 5px 2px 5px 25px;
+              background: url('http://3.bp.blogspot.com/-4w14hQHr5yQ/Tgm6u7KwUkI/AAAAAAAACAI/Hu2poBOPx3g/s25/search.png') no-repeat scroll 0 50% white;
+              ">
+            </form>
+{% endblock %}

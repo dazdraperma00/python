@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %} {{ product }} {% endblock %}
+
+{% block content %}
+
+<div class="block2">
+    <p>
+        Название: {{ product.name }}
+    </p>
+
+    <p>
+        Автор: {{ product.author}}
+    </p>
+
+    <p>
+        Поставщик: {{ product.supplier }}
+    </p>
+
+    <p>
+        Цена: {{ product.price }} р.
+    </p>
+
+    <p>
+        Осталось на складе: {{ product.count }} шт.
+    </p>
+
+</div>
+
+<div  class="block">
+    <a href="{{ edit_product }}" class="button15">
+        Редактировать
+    </a>
+</div>
+
+{% endblock %}

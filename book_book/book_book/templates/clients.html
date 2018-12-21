@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %} Клиенты {% endblock %}
+
+{% block content %}
+
+<ul class="category-list">
+    {% for client in clients %}
+        <li><a href="/clients/{{ client.pk }}"> {{ client }} </a></li>
+    {% endfor %}
+</ul>
+
+<div align="center" class="block">
+    <a href="{{ client_add_url }}" class="button15">
+        Добавить клиента
+    </a>
+</div>
+
+{% endblock %}
+
+{% block left %}
+            <form action="" target="_blank">
+              <input type="hidden" name="searchid" value="808327">
+              <input type="search" name="text" required placeholder="Поиск по клиентам" style="padding: 5px 2px 5px 25px;
+              background: url('http://3.bp.blogspot.com/-4w14hQHr5yQ/Tgm6u7KwUkI/AAAAAAAACAI/Hu2poBOPx3g/s25/search.png') no-repeat scroll 0 50% white;
+              ">
+            </form>
+{% endblock %}
+
+{% block right %}
+<h  style="font-size: 50px; color:white; padding: 0px, 100px">
+    Статистика:
+</h>
+<p style="font-size: 25px; color:white" >
+    Самый активный клиент:
+</p>
+{% endblock %}

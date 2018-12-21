@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %} Главная страница {% endblock %}
+
+{% block content %}
+
+<table align="center" style="margin-bottom: 50px">
+    <tr>
+        <th valign="top">
+           Дата продажи
+        </th>
+        <th valign="top">
+           Наименование товара
+        </th>
+        <th>
+            Клиент
+        </th>
+        <th>
+            Кол-во
+        </th>
+        <th>
+            Сумма
+        </th>
+    </tr>
+    {% for sale in sales %}
+    <tr>
+        <td valign="top">
+           {{ sale.date }}
+        </td>
+        <td valign="top">
+           {{ sale.product }}
+        </td>
+        <td>
+            {{ sale.client }}
+        </td>
+        <td>
+           {{ sale.count }}
+        </td>
+        <td>
+           {{ sale.sum }}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<div align="center" class="block">
+    <a href="{{ sale_add_url }}" class="button15">
+        Добавить запись
+    </a>
+</div>
+{% endblock %}
