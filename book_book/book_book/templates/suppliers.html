@@ -3,6 +3,7 @@
 {% block title %} Поставщики {% endblock %}
 
 {% block content %}
+<h1 align="center"> Поставщики </h1>
 
 <ul class="category-list">
     {% for supplier in suppliers %}
@@ -25,4 +26,8 @@
               background: url('http://3.bp.blogspot.com/-4w14hQHr5yQ/Tgm6u7KwUkI/AAAAAAAACAI/Hu2poBOPx3g/s25/search.png') no-repeat scroll 0 50% white;
               ">
             </form>
+{% endblock %}
+
+{% block back %}
+<a style="float: left; font-size: 20px" href="{{ back }}"> Назад</a>
 {% endblock %}

@@ -37,6 +37,12 @@ urlpatterns = [
 
     path('sales/', views.show_sales),
     path('sales/add_sale', views.SaleCreate.as_view()),
+    path('sales/edit_<int:pk>', views.SaleUpdate.as_view()),
+
+    path('staff/', views.show_staff),
+    path('staff/<int:pk>', views.StaffView.as_view()),
+    path('staff/<int:pk>/edit', views.StaffUpdate.as_view()),
+    path('staff/add_staff/', views.StaffCreate.as_view()),
 
     path('admin/', admin.site.urls),
 ]

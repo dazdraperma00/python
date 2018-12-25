@@ -102,8 +102,10 @@ a.button15:active {
 }
 
 
+
 .child
 {
+    float: left;
     padding: 0;
 	display: inline-block;
 }
@@ -118,6 +120,7 @@ a.button15:active {
 
 body {
   margin: 0;
+  background-color: grey;
 }
 
 table {
@@ -142,3 +145,13 @@ background: #D8E6F3;
 th:first-child, td:first-child {
 text-align: left;
 }
+
+h1 {
+  font-family: 'Open Sans', sans-serif;
+  position: relative;
+  color: #5C2610;
+  font-size: 3em;
+  font-weight: normal;
+  line-height: 1;
+  align: center;
+ }

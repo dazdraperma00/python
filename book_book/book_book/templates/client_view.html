@@ -16,6 +16,10 @@
     <p>
     Телефон: {{ client.phone }}
     </p>
+
+    <p>
+    Эл. почта: {{ client.email }}
+    </p>
 </div>
 
 <div  class="block">
@@ -24,4 +28,8 @@
     </a>
 </div>
 
+{% endblock %}
+
+{% block back %}
+<a style="float: left; font-size: 20px" href="{{ back }}"> Назад</a>
 {% endblock %}

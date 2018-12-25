@@ -1,19 +1,19 @@
 {% extends 'base.html' %}
 
-{% block title %} Товары {% endblock %}
+{% block title %} Сотрудники {% endblock %}
 
 {% block content %}
-<h1 align="center"> Товары </h1>
+<h1 align="center"> Сотрудники </h1>
 
 <ul class="category-list">
-    {% for product in products %}
-        <li><a href="/products/{{ product.pk }}"> {{ product }} </a></li>
+    {% for staffer in staff %}
+        <li><a href="/staff/{{ staffer.pk }}"> {{ staffer }} </a></li>
     {% endfor %}
 </ul>
 
 <div align="center" class="block">
-    <a href="{{ product_add_url }}" class="button15">
-        Добавить товар
+    <a href="{{ staff_add_url }}" class="button15">
+        Добавить сотрудника
     </a>
 </div>
 
@@ -22,20 +22,18 @@
 {% block left %}
             <form action="" target="_blank">
               <input type="hidden" name="searchid" value="808327">
-              <input type="search" name="text" required placeholder="Поиск по товарам" style="padding: 5px 2px 5px 25px;
+              <input type="search" name="text" required placeholder="Поиск по сотрудникам" style="padding: 5px 2px 5px 25px;
               background: url('http://3.bp.blogspot.com/-4w14hQHr5yQ/Tgm6u7KwUkI/AAAAAAAACAI/Hu2poBOPx3g/s25/search.png') no-repeat scroll 0 50% white;
               ">
             </form>
 {% endblock %}
 
 {% block right %}
-<h align="center" style="font-size: 50px; color:white;">
+<h  style="font-size: 50px; color:white; padding: 0px, 100px">
     Статистика:
 </h>
-<p style="font-size: 20px; color:white" >
-    Самый дорогой товар: {{ costly }}
-    <br/>
-    Самый дешевый товар: {{ cheap }}
+<p style="font-size: 25px; color:white" >
+    Лучший сотрудник: {{ best_staffer }}
 </p>
 {% endblock %}
 

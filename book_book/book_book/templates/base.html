@@ -1,18 +1,24 @@
 {% load static %}
 
 <head>
+
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
     <link rel="stylesheet" href="{% static 'css/list.css' %}">
     <title> {% block title %} My amazing site {% endblock %}</title>
 </head>
 
 <body bgcolor="grey">
-<div class="two" style="border-radius: 20px"><h1> <a href="/"> Book-books </a> </h1></div>
+<div style="border: 1px solid black;">
+    <div class="two" style="border-radius: 0 0 20px 20px;">{% block back %}{% endblock %}<a href="/"><h1> Book-books</h1></a></div>
+</div>
 <div class="parent">
-    <div class="child"  align="center" style="width: 25%;"> {% block left %} {% endblock %} </div>
+    <div class="child"  align="center" style="width: 25%; margin-top: 20px"> {% block left %} {% endblock %} </div>
     <div class="child" style="border-radius: 0 0 20px 20px; width: 49%; border: 1px solid black; background: white;" >
         {% block content %}
         {% endblock %}
     </div>
-    <div class="child" align="center" style="width: 25%;"> {% block right %} {% endblock %} </div>
+    <div class="child" align="center" style="width: 25%; margin-top: 20px"> {% block right %} {% endblock %} </div>
 </div>
 </body>

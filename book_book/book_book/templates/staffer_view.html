@@ -1,29 +1,34 @@
 {% extends 'base.html' %}
 
-{% block title %} {{ supplier }} {% endblock %}
+{% block title %} {{ staffer }} {% endblock %}
 
 {% block content %}
 
 <div class="block2">
     <p>
-        Имя поставщика: {{ supplier.name }}
+        Имя: {{ client.first_name }}
     </p>
 
     <p>
-        Телефон: {{ supplier.phone}}
+    Фамилия: {{ staffer.last_name}}
     </p>
 
     <p>
-        Эл. почта: {{ supplier.email }}
+    Телефон: {{ staffer.phone }}
     </p>
 
     <p>
-        Адрес: {{ supplier.address }}
+    Эл. почта: {{ staffer.email }}
     </p>
+
+    <p>
+    Должность: {{ staffer.post }}
+    </p>
+
 </div>
 
 <div  class="block">
-    <a href="{{ edit_supplier }}" class="button15">
+    <a href="{{ edit_staff }}" class="button15">
         Редактировать
     </a>
 </div>

@@ -3,6 +3,7 @@
 {% block title %} Клиенты {% endblock %}
 
 {% block content %}
+<h1 align="center"> Клиенты </h1>
 
 <ul class="category-list">
     {% for client in clients %}
@@ -32,6 +33,11 @@
     Статистика:
 </h>
 <p style="font-size: 25px; color:white" >
-    Самый активный клиент:
+    Лучший клиент: {{ best_client }}
 </p>
+{% endblock %}
+
+
+{% block back %}
+<a style="float: left; font-size: 20px" href="{{ back }}"> Назад</a>
 {% endblock %}
